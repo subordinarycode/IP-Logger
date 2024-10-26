@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Protected Route</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        form {
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            width: 300px; /* Set a fixed width for the form */
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background-color: #222;
+            color: #fff;
+        }
+        input[type="submit"] {
+            padding: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+        .error {
+            color: #ff4d4d; /* Red color for error messages */
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+    <script>
+        async function hashPassword(event) {
+            event.preventDefault(); // Prevent form from submitting normally
+
+            const password = document.getElementById('password').value;
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+
+            // Convert hash to hex string
+            const hashArray = Array.from(new Uint8Array(hash));
+            const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+
+            // Create a hidden input to store the hashed password and submit the form
+            const form = event.target;
+            const hashedInput = document.createElement('input');
+            hashedInput.type = 'hidden';
+            hashedInput.name = 'password';
+            hashedInput.value = hashHex;
+
+            form.appendChild(hashedInput);
+            form.submit();
+        }
+    </script>
+</head>
+<body>
+    <form method="POST" onsubmit="hashPassword(event)">
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+        <input type="password" id="password" required placeholder="Password">
+        <input type="submit" value="Login">
+    </form>
+</body>
+</html>
