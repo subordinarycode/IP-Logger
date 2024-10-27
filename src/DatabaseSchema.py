@@ -12,9 +12,22 @@ def get_all_links(db_path):
 def insert_link(db_path, link1, link2):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
-        cursor.execute('''
-        INSERT INTO links (link1, link2) VALUES (?, ?)
-        ''', (link1, link2))
+
+        # Check if link1 exists
+        cursor.execute('SELECT link1 FROM links WHERE link1 = ?', (link1,))
+        result = cursor.fetchone()
+
+        if result:
+            # Update the existing record
+            cursor.execute('''
+            UPDATE links SET link2 = ? WHERE link1 = ?
+            ''', (link2, link1))
+        else:
+            # Insert a new record
+            cursor.execute('''
+            INSERT INTO links (link1, link2) VALUES (?, ?)
+            ''', (link1, link2))
+
         conn.commit()
 
 

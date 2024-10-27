@@ -173,6 +173,11 @@ def statistics():
     if session.get('authenticated'):
         with sqlite3.connect(db_path) as conn:
             cursor = conn.cursor()
+            link_map = get_all_links(db_path)
+            if link_map:
+                print("reversing list")
+                link_map.reverse()
+
             cursor.execute("SELECT * FROM user_info")  # Fetch all records
             user_info_records = cursor.fetchall()
 
@@ -228,7 +233,7 @@ def statistics():
                 "timestamp": record[45],  # Note: Make sure to adjust if your query doesn't return all columns
             })
 
-        return render_template("statistics.html", user_info=user_info_list)
+        return render_template("statistics.html", user_info=user_info_list, link_map=link_map)
 
     # If not authenticated, show the login form
     return render_template("login.html")
@@ -253,6 +258,31 @@ def clear_database():
     except Exception as e:
         logging.error(f"Error clearing database: {str(e)}")
         return jsonify({"status": "error", "message": "Error clearing database."}), 500
+
+
+@app.route("/delete-link", methods=["POST"])
+def delete_link():
+    # Make sure user is authenticated
+    if not session.get('authenticated'):
+        logging.error(f"Unauthenticated request to clear database from {request.remote_addr}")
+        return jsonify({"status": "error", "message": "Unauthorized access"}), 403
+
+    data = request.json
+    custom_link = data.get("custom_link", "")
+
+    # Ensure custom_link is not empty
+    if not custom_link:
+        return jsonify({"status": "error", "message": "No link specified."}), 400
+
+    try:
+        with sqlite3.connect(db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM links WHERE link1 = ?", (custom_link,))
+            conn.commit()
+
+        return jsonify({"status": "success", "message": "Link successfully removed from the database."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @app.route("/generate-link", methods=["POST"])
@@ -365,9 +395,11 @@ if __name__ == "__main__":
     init_db(db_path)
     gps = args.gps
 
-    # Display the generated password
+    # Display the generated password and statistics link
     clients_password = generate_password()
     clients_password_hash = sha256(clients_password.encode()).hexdigest()
+    print(f"Statistics URL: https://localhost:{args.port}/statistics")
     print(f"Login password: \033[92m{clients_password}\033[0m")
+
     main()
 

@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Information</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/statistics.css') }}">
+     <link rel="stylesheet" href="{{ url_for('static', filename='css/statistics.css') }}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='js/confirmDatabaseClear.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/statistics.js') }}" defer></script>
+
+
+
 </head>
 <body>
     <div class="container">
@@ -73,11 +76,36 @@
                 </div>
             </div>
 
-            <div id="generated-url" style="display: none;">
-                <span id="url-text"></span>
-                <button class="copy-button" id="copy-url">Copy</button>
-            </div>
         </div>
+
+
+<div class="table-container">
+    <table class="links-table">
+        <thead>
+            <tr>
+                <th>Custom URL</th>
+                <th>Redirect URL</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for custom_link, redirect_link in link_map %}
+            <tr>
+                <td>{{ custom_link }}</td>
+                <td>{{ redirect_link }}</td>
+                <td>
+                    <button class="copy-button" onclick="copyToClipboard('{{ custom_link }}')">Copy</button>
+                    <button class="delete-button" onclick="deleteLink('{{ custom_link }}')">Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+
+
 
         <!-- Data Charts -->
         <div class="chart-container">

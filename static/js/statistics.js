@@ -133,8 +133,6 @@ document.getElementById('generate-url').onclick = function() {
         customUrl += fileExtension; // Append the file extension if provided
     }
 
-    document.getElementById('url-text').innerText = customUrl;
-    document.getElementById('generated-url').style.display = 'flex'; // Show the URL container
 
     // Send the data to the Flask server
     fetch('/generate-link', {
@@ -151,17 +149,48 @@ document.getElementById('generate-url').onclick = function() {
         return response.json(); // Assuming the server responds with JSON
     })
     .then(data => {
+        // Refresh the page after successful URL generation
+        location.reload(); // Refresh the page
     })
     .catch((error) => {
         console.error('Error:', error); // Handle errors if any
     });
 };
 
-document.getElementById('copy-url').onclick = function() {
-    const urlText = document.getElementById('url-text').innerText;
-    navigator.clipboard.writeText(urlText).then(() => {
-        alert('URL copied to clipboard!'); // Optional: Notify user
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Custom link copied to clipboard!'); // Notify the user
+    }).catch(err => {
+        console.error('Could not copy text: ', err);
     });
-};
+}
+
+
+function deleteLink(customLink) {
+    if (confirm('Are you sure you want to delete this link?')) {
+        console.log(customLink);
+        fetch('/delete-link', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ custom_link: customLink })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message); // Notify user of success
+                location.reload(); // Optionally refresh the page
+            } else {
+                alert('Error: ' + data.message); // Notify user of the error
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error); // Handle errors if any
+        });
+    }
+}
+
 
 init(userInfo);
