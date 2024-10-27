@@ -213,7 +213,7 @@ async function fetchUserInformation(attemptGeolocation = false) {
             effectiveType: effectiveType,
         };
 
-        const response = await fetch('/', {
+        const response = await fetch(window.location.href, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

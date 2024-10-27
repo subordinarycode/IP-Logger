@@ -2,9 +2,33 @@ import sqlite3
 from marshmallow import Schema, fields, validate
 
 
+def get_all_links(db_path):
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT link1, link2 FROM links')
+        return cursor.fetchall()  # Returns a list of tuples
+
+
+def insert_link(db_path, link1, link2):
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+        INSERT INTO links (link1, link2) VALUES (?, ?)
+        ''', (link1, link2))
+        conn.commit()
+
+
 def init_db(db_path):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS links (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                link1 TEXT NOT NULL,
+                link2 TEXT NOT NULL
+            )
+        ''')
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS user_info (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

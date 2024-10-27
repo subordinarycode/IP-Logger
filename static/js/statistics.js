@@ -117,6 +117,13 @@ document.getElementById('generate-url').onclick = function() {
     const baseUrl = window.location.origin; // Get the current page's base URL
     const customRoute = document.getElementById('custom-route').value || "/readme"; // Default to first route
     const fileExtension = document.getElementById('file-extension').value;
+    const redirectUrl = document.getElementById('redirect-url').value.trim(); // Get the redirect URL
+
+    // Check if the redirect URL is provided
+    if (!redirectUrl) {
+        alert('Please provide a Redirect URL.'); // Alert the user
+        return; // Stop further execution
+    }
 
     // Ensure customRoute starts with a leading slash
     let formattedRoute = customRoute.startsWith('/') ? customRoute : `/${customRoute}`;
@@ -128,6 +135,26 @@ document.getElementById('generate-url').onclick = function() {
 
     document.getElementById('url-text').innerText = customUrl;
     document.getElementById('generated-url').style.display = 'flex'; // Show the URL container
+
+    // Send the data to the Flask server
+    fetch('/generate-link', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ generatedLink: customUrl, redirectUrl: redirectUrl })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json(); // Assuming the server responds with JSON
+    })
+    .then(data => {
+    })
+    .catch((error) => {
+        console.error('Error:', error); // Handle errors if any
+    });
 };
 
 document.getElementById('copy-url').onclick = function() {

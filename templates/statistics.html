@@ -21,59 +21,63 @@
             <button class="button button-clear" onclick="confirmClearDatabase()">Clear Database</button>
         </div>
 
-<!-- Custom URL Generation Section -->
-<div class="custom-url-container">
-        <div class="input-container">
-            <div class="input-wrapper">
-                <input type="text" id="custom-route" placeholder="Enter your route here">
+        <!-- Custom URL Generation Section -->
+        <div class="custom-url-container">
+            <div class="input-container">
+
+                <div class="input-wrapper">
+                    <select id="file-extension">
+                        <option value="">-- None --</option>
+                        <option value=".html">.html</option>
+                        <option value=".htm">.htm</option>
+                        <option value=".json">.json</option>
+                        <option value=".xml">.xml</option>
+                        <option value=".txt">.txt</option>
+                        <option value=".csv">.csv</option>
+                        <option value=".jpg">.jpg</option>
+                        <option value=".jpeg">.jpeg</option>
+                        <option value=".png">.png</option>
+                        <option value=".gif">.gif</option>
+                        <option value=".bmp">.bmp</option>
+                        <option value=".pdf">.pdf</option>
+                        <option value=".doc">.doc</option>
+                        <option value=".docx">.docx</option>
+                        <option value=".ppt">.ppt</option>
+                        <option value=".pptx">.pptx</option>
+                        <option value=".xls">.xls</option>
+                        <option value=".xlsx">.xlsx</option>
+                        <option value=".zip">.zip</option>
+                        <option value=".rar">.rar</option>
+                        <option value=".tar">.tar</option>
+                        <option value=".gz">.gz</option>
+                        <option value=".7z">.7z</option>
+                        <option value=".svg">.svg</option>
+                        <option value=".css">.css</option>
+                        <option value=".js">.js</option>
+                        <option value=".md">.md</option>
+                        <option value=".rss">.rss</option>
+                        <option value=".webp">.webp</option>
+                        <option value=".ico">.ico</option>
+                        <option value=".woff">.woff</option>
+                        <option value=".woff2">.woff2</option>
+                        <option value=".eot">.eot</option>
+                    </select>
+                </div>
+
+                <div class="input-wrapper">
+                    <input type="text" id="custom-route" placeholder="Custom Route">
+                </div>
+
+                <div class="input-wrapper">
+                    <input type="text" id="redirect-url" placeholder="Redirect URL" required>
+                </div>
             </div>
 
-            <div class="input-wrapper">
-                <select id="file-extension">
-                    <option value="">-- None --</option>
-                    <option value=".html">.html</option>
-                    <option value=".htm">.htm</option>
-                    <option value=".json">.json</option>
-                    <option value=".xml">.xml</option>
-                    <option value=".txt">.txt</option>
-                    <option value=".csv">.csv</option>
-                    <option value=".jpg">.jpg</option>
-                    <option value=".jpeg">.jpeg</option>
-                    <option value=".png">.png</option>
-                    <option value=".gif">.gif</option>
-                    <option value=".bmp">.bmp</option>
-                    <option value=".pdf">.pdf</option>
-                    <option value=".doc">.doc</option>
-                    <option value=".docx">.docx</option>
-                    <option value=".ppt">.ppt</option>
-                    <option value=".pptx">.pptx</option>
-                    <option value=".xls">.xls</option>
-                    <option value=".xlsx">.xlsx</option>
-                    <option value=".zip">.zip</option>
-                    <option value=".rar">.rar</option>
-                    <option value=".tar">.tar</option>
-                    <option value=".gz">.gz</option>
-                    <option value=".7z">.7z</option>
-                    <option value=".svg">.svg</option>
-                    <option value=".css">.css</option>
-                    <option value=".js">.js</option>
-                    <option value=".md">.md</option>
-                    <option value=".rss">.rss</option>
-                    <option value=".webp">.webp</option>
-                    <option value=".ico">.ico</option>
-                    <option value=".woff">.woff</option>
-                    <option value=".woff2">.woff2</option>
-                    <option value=".eot">.eot</option>
-                </select>
-
+            <div id="generated-url" style="display: none;">
+                <span id="url-text"></span>
+                <button class="copy-button" id="copy-url">Copy</button>
             </div>
         </div>
-
-        <div id="generated-url" style="display: none;">
-            <span id="url-text"></span>
-            <button class="copy-button" id="copy-url">Copy</button>
-        </div>
-    </div>
 
         <!-- Data Charts -->
         <div class="chart-container">

