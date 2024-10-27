@@ -93,7 +93,7 @@ This Flask application captures and logs client information, including geolocati
 2. **Initialize the SQLite Database**:
    Run the Flask application to automatically create the `clients.db` database in the `etc/` directory:
    ```bash
-   python app.py --redirect_url <your_redirect_url>
+   python app.py
    ```
 
 ## Configuration
@@ -113,12 +113,12 @@ To make the application accessible over the internet without configuring your fi
 To start the Flask application, run the following command:
 
 ```bash
-python app.py --redirect_url <URL to redirect after data submission>
+python app.py
 ```
 
 ### Example:
 ```bash
-python app.py --redirect_url "http://example.com" --debug
+python app.py -i 0.0.0.0 -p 8080 --debug
 ```
 
 ## Routes
@@ -126,11 +126,9 @@ python app.py --redirect_url "http://example.com" --debug
 - `/` - Collects client data via POST requests in JSON format, validates it, and logs it to the database.
 - `/statistics` - Admin route for viewing logged client data. This route requires a password for authentication.
 - `/clear-database` - Clears all entries from the `user_info` table. Only accessible to authenticated users.
-- `/favicon.ico` - Serves the application’s favicon.
 
 ## Command-Line Arguments
 
-- `--redirect_url`: URL to redirect users after form submission.
 - `--debug`: Enables Flask debug mode.
 - `--ssl_cert`: Path to SSL certificate file.
 - `--ssl_key`: Path to SSL key file.
@@ -141,7 +139,7 @@ python app.py --redirect_url "http://example.com" --debug
 
 ### Example
 ```bash
-python app.py --redirect_url "http://example.com" --debug --ssl_cert path/to/cert.pem --ssl_key path/to/key.pem --gps
+python app.py -i 0.0.0.0 -p 8080 --debug --ssl_cert path/to/cert.pem --ssl_key path/to/key.pem --gps
 ```
 
 ## Logging
