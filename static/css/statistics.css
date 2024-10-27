@@ -21,16 +21,13 @@ body {
     text-align: center;
     margin-bottom: 30px;
 }
-h1 {
-    font-size: 2.5em;
-    margin: 0;
-    color: #007bff;
-}
+
 .button-container {
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
 }
+
 .button {
     display: inline-block;
     margin: 0 10px;
@@ -42,20 +39,25 @@ h1 {
     border-radius: 5px;
     transition: background-color 0.3s, transform 0.2s;
 }
+
 .button-refresh {
     background-color: #007bff;
 }
+
 .button-refresh:hover {
     background-color: #0056b3;
     transform: translateY(-2px);
 }
+
 .button-clear {
     background-color: #dc3545;
 }
+
 .button-clear:hover {
     background-color: #c82333;
     transform: translateY(-2px);
 }
+
 .table-container {
     max-height: 400px;
     overflow-y: auto;
@@ -66,30 +68,37 @@ h1 {
     overflow-x: auto;
     padding: 10px;
 }
+
 table {
     width: 100%;
     border-collapse: collapse;
 }
+
 th, td {
     padding: 15px;
     text-align: left;
     border-bottom: 1px solid #444;
     transition: background-color 0.3s;
 }
+
 th {
     background-color: #007bff;
     color: #ffffff;
     font-weight: bold;
 }
+
 tr:hover {
     background-color: #333;
 }
+
 tbody tr:nth-child(even) {
     background-color: #1f1f1f;
 }
+
 tbody tr:nth-child(odd) {
    background -color: #242424;
 }
+
 .chart-container {
     display: flex;
     flex-wrap: wrap;
@@ -97,6 +106,7 @@ tbody tr:nth-child(odd) {
     width: 100%;
     margin: 20px 0;
 }
+
 .chart {
     width: 45%;
     max-width: 400px;
@@ -104,6 +114,7 @@ tbody tr:nth-child(odd) {
     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
     margin-bottom: 20px;
 }
+
 #map {
     height: 500px;
     width: 100%;
@@ -111,6 +122,7 @@ tbody tr:nth-child(odd) {
     margin-top: 20px;
     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.7);
 }
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
     width: 12px;
@@ -145,11 +157,15 @@ tbody tr:nth-child(odd) {
     max-width: 400px; /* Set a max-width to control the size */
 }
 
-label {
-    margin-bottom: 5px;
-    display: block;
-    font-weight: bold;
-    text-align: center; /* Center the label text */
+.flex-container {
+    display: flex; /* Align items in a row */
+    align-items: center; /* Center items vertically */
+}
+
+.gps-label {
+    display: flex; /* Use flexbox for alignment */
+    align-items: center; /* Center items vertically */
+    cursor: pointer; /* Change cursor to pointer on hover */
 }
 
 input[type="text"] {
@@ -175,20 +191,6 @@ input[type="text"]:focus,
 select:focus {
     border: 1px solid #ffcc00;
     outline: none;
-
-}
-
-#generated-url {
-    margin-top: 20px;
-    text-align: center; /* Center the generated URL text */
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Center elements inside */
-}
-
-#url-text {
-    color: #f0f0f0; /* Match text color */
-    margin-bottom: 10px; /* Space between URL and button */
 }
 
 .copy-button {

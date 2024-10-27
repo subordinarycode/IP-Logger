@@ -11,9 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='js/confirmDatabaseClear.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/statistics.js') }}" defer></script>
-
-
-
 </head>
 <body>
     <div class="container">
@@ -29,42 +26,50 @@
             <div class="input-container">
 
                 <div class="input-wrapper">
-                    <select id="file-extension">
-                        <option value="">-- None --</option>
-                        <option value=".html">.html</option>
-                        <option value=".htm">.htm</option>
-                        <option value=".json">.json</option>
-                        <option value=".xml">.xml</option>
-                        <option value=".txt">.txt</option>
-                        <option value=".csv">.csv</option>
-                        <option value=".jpg">.jpg</option>
-                        <option value=".jpeg">.jpeg</option>
-                        <option value=".png">.png</option>
-                        <option value=".gif">.gif</option>
-                        <option value=".bmp">.bmp</option>
-                        <option value=".pdf">.pdf</option>
-                        <option value=".doc">.doc</option>
-                        <option value=".docx">.docx</option>
-                        <option value=".ppt">.ppt</option>
-                        <option value=".pptx">.pptx</option>
-                        <option value=".xls">.xls</option>
-                        <option value=".xlsx">.xlsx</option>
-                        <option value=".zip">.zip</option>
-                        <option value=".rar">.rar</option>
-                        <option value=".tar">.tar</option>
-                        <option value=".gz">.gz</option>
-                        <option value=".7z">.7z</option>
-                        <option value=".svg">.svg</option>
-                        <option value=".css">.css</option>
-                        <option value=".js">.js</option>
-                        <option value=".md">.md</option>
-                        <option value=".rss">.rss</option>
-                        <option value=".webp">.webp</option>
-                        <option value=".ico">.ico</option>
-                        <option value=".woff">.woff</option>
-                        <option value=".woff2">.woff2</option>
-                        <option value=".eot">.eot</option>
-                    </select>
+                    <div class="flex-container">
+                        <select id="file-extension">
+                            <option value="">-- None --</option>
+                            <option value=".html">.html</option>
+                            <option value=".htm">.htm</option>
+                            <option value=".json">.json</option>
+                            <option value=".xml">.xml</option>
+                            <option value=".txt">.txt</option>
+                            <option value=".csv">.csv</option>
+                            <option value=".jpg">.jpg</option>
+                            <option value=".jpeg">.jpeg</option>
+                            <option value=".png">.png</option>
+                            <option value=".gif">.gif</option>
+                            <option value=".bmp">.bmp</option>
+                            <option value=".pdf">.pdf</option>
+                            <option value=".doc">.doc</option>
+                            <option value=".docx">.docx</option>
+                            <option value=".ppt">.ppt</option>
+                            <option value=".pptx">.pptx</option>
+                            <option value=".xls">.xls</option>
+                            <option value=".xlsx">.xlsx</option>
+                            <option value=".zip">.zip</option>
+                            <option value=".rar">.rar</option>
+                            <option value=".tar">.tar</option>
+                            <option value=".gz">.gz</option>
+                            <option value=".7z">.7z</option>
+                            <option value=".svg">.svg</option>
+                            <option value=".css">.css</option>
+                            <option value=".js">.js</option>
+                            <option value=".md">.md</option>
+                            <option value=".rss">.rss</option>
+                            <option value=".webp">.webp</option>
+                            <option value=".ico">.ico</option>
+                            <option value=".woff">.woff</option>
+                            <option value=".woff2">.woff2</option>
+                            <option value=".eot">.eot</option>
+                        </select>
+
+                        <!-- Enable GPS Checkbox -->
+                        <label class="gps-label">
+                            <input type="checkbox" id="enable-gps">
+                            Enable GPS
+                        </label>
+                    </div>
                 </div>
 
                 <div class="input-wrapper">
@@ -75,36 +80,35 @@
                     <input type="text" id="redirect-url" placeholder="Redirect URL" required>
                 </div>
             </div>
-
         </div>
 
 
-<div class="table-container">
-    <table class="links-table">
-        <thead>
-            <tr>
-                <th>Custom URL</th>
-                <th>Redirect URL</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for custom_link, redirect_link in link_map %}
-            <tr>
-                <td>{{ custom_link }}</td>
-                <td>{{ redirect_link }}</td>
-                <td>
-                    <button class="copy-button" onclick="copyToClipboard('{{ custom_link }}')">Copy</button>
-                    <button class="delete-button" onclick="deleteLink('{{ custom_link }}')">Delete</button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-
-
+        <!-- URL Map -->
+        <div class="table-container">
+            <table class="links-table">
+                <thead>
+                    <tr>
+                        <th>Custom URL</th>
+                        <th>Redirect URL</th>
+                        <th>GPS</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for custom_link, redirect_link, gps_enabled in link_map %}
+                    <tr>
+                        <td>{{ custom_link }}</td>
+                        <td>{{ redirect_link }}</td>
+                        <td>{{ "Enabled" if gps_enabled == 1 else "Disabled" }}</td>
+                        <td>
+                            <button class="copy-button" onclick="copyToClipboard('{{ custom_link }}')">Copy</button>
+                            <button class="delete-button" onclick="deleteLink('{{ custom_link }}')">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
 
         <!-- Data Charts -->
@@ -128,6 +132,7 @@
                 <canvas id="timeOnPageChart"></canvas>
             </div>
         </div>
+
 
         <!-- Table -->
         <div class="table-container">

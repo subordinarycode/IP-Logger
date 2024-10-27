@@ -118,6 +118,9 @@ document.getElementById('generate-url').onclick = function() {
     const customRoute = document.getElementById('custom-route').value || "/readme"; // Default to first route
     const fileExtension = document.getElementById('file-extension').value;
     const redirectUrl = document.getElementById('redirect-url').value.trim(); // Get the redirect URL
+    const gpsEnabled = document.getElementById('enable-gps').checked ? 1 : 0;
+
+
 
     // Check if the redirect URL is provided
     if (!redirectUrl) {
@@ -140,7 +143,7 @@ document.getElementById('generate-url').onclick = function() {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ generatedLink: customUrl, redirectUrl: redirectUrl })
+        body: JSON.stringify({ generatedLink: customUrl, redirectUrl: redirectUrl, gpsEnabled: gpsEnabled})
     })
     .then(response => {
         if (!response.ok) {

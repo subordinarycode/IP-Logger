@@ -5,11 +5,19 @@ from marshmallow import Schema, fields, validate
 def get_all_links(db_path):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT link1, link2 FROM links')
+        cursor.execute('SELECT link1, link2, gps FROM links')
         return cursor.fetchall()  # Returns a list of tuples
 
 
-def insert_link(db_path, link1, link2):
+def get_link_by_url(db_path, url):
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        # Use parameterized query to fetch the specific link
+        cursor.execute('SELECT link1, link2, gps FROM links WHERE link1 = ?', (url.strip(),))
+        return cursor.fetchone()  # Returns a single tuple or None if not found
+
+
+def insert_link(db_path, link1, link2, gps_enabled):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
 
@@ -20,13 +28,13 @@ def insert_link(db_path, link1, link2):
         if result:
             # Update the existing record
             cursor.execute('''
-            UPDATE links SET link2 = ? WHERE link1 = ?
-            ''', (link2, link1))
+            UPDATE links SET link2 = ?, gps = ? WHERE link1 = ?
+            ''', (link2, gps_enabled, link1))
         else:
             # Insert a new record
             cursor.execute('''
-            INSERT INTO links (link1, link2) VALUES (?, ?)
-            ''', (link1, link2))
+            INSERT INTO links (link1, link2, gps) VALUES (?, ?, ?)
+            ''', (link1, link2, gps_enabled))
 
         conn.commit()
 
@@ -38,7 +46,8 @@ def init_db(db_path):
             CREATE TABLE IF NOT EXISTS links (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 link1 TEXT NOT NULL,
-                link2 TEXT NOT NULL
+                link2 TEXT NOT NULL,
+                gps INTEGER NOT NULL
             )
         ''')
 
@@ -93,6 +102,12 @@ def init_db(db_path):
             )
         ''')
         conn.commit()
+
+
+class LinksSchema(Schema):
+    generatedLink = fields.Str(required=True)
+    redirectUrl = fields.Str(required=True)
+    gpsEnabled = fields.Int(required=True, validate=validate.OneOf([0, 1]))
 
 
 class UserInfoSchema(Schema):
