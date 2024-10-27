@@ -40,6 +40,7 @@ class Cloudflared:
         self.url = ""
         self._process = None
         self._download_dir = download_dir
+
         if socketio_app:
             self.flask_thread = threading.Thread(target=self.app.run, kwargs={"threaded": True, "host": self.host, "port": self.port, "app": self.app})
         else:
@@ -51,6 +52,14 @@ class Cloudflared:
         self._install()
 
     def _install(self) -> bool:
+        # Check if in Termux
+        if os.path.exists('/data/data/com.termux/files/home'):
+            if not os.path.exists('/data/data/com.termux/files/usr/bin/cloudflared'):
+                print("Detected Termux environment. Installing cloudflared via pkg.")
+                subprocess.run(["pkg", "install", "-y", "cloudflared"], check=True)
+                return os.path.isfile('/data/data/com.termux/files/usr/bin/cloudflared')
+
+        # Download the latest release of cloudflared
         if not os.path.isfile(f"{self._download_dir}/cloudflared"):
             print(f"Installing cloudflared in {self._download_dir}/cloudflared")
             arch = os.uname().machine
@@ -113,9 +122,10 @@ class Cloudflared:
 
         # Launching Cloudflared
         if os.path.exists(termux_chroot):
+            binary_file = '/data/data/com.termux/files/usr/bin/cloudflared'
             self._process = subprocess.Popen([termux_chroot, binary_file, "tunnel", "-url", f"{self.host}:{self.port}", "--logfile", log_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         else:
-            self._process= subprocess.Popen([binary_file, "tunnel", "-url", f"{self.host}:{self.port}", "--logfile", log_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self._process = subprocess.Popen([binary_file, "tunnel", "-url", f"{self.host}:{self.port}", "--logfile", log_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         # Delay
         time.sleep(8)

