@@ -113,4 +113,28 @@ const init = (userInfo) => {
     initCharts(userInfo);
 };
 
+document.getElementById('generate-url').onclick = function() {
+    const baseUrl = window.location.origin; // Get the current page's base URL
+    const customRoute = document.getElementById('custom-route').value || "/readme"; // Default to first route
+    const fileExtension = document.getElementById('file-extension').value;
+
+    // Ensure customRoute starts with a leading slash
+    let formattedRoute = customRoute.startsWith('/') ? customRoute : `/${customRoute}`;
+
+    let customUrl = `${baseUrl}${formattedRoute}`; // Append the route to the base URL
+    if (fileExtension) {
+        customUrl += fileExtension; // Append the file extension if provided
+    }
+
+    document.getElementById('url-text').innerText = customUrl;
+    document.getElementById('generated-url').style.display = 'flex'; // Show the URL container
+};
+
+document.getElementById('copy-url').onclick = function() {
+    const urlText = document.getElementById('url-text').innerText;
+    navigator.clipboard.writeText(urlText).then(() => {
+        alert('URL copied to clipboard!'); // Optional: Notify user
+    });
+};
+
 init(userInfo);
