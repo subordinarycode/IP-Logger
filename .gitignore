@@ -1,0 +1,7 @@
+.venv/*
+etc/*.db
+etc/*.log
+etc/*.pem
+*.bak
+.idea/*
+src/__pycache__/

