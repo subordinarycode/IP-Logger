@@ -234,7 +234,8 @@ def statistics():
                 "timestamp": record[45],
             })
 
-        return render_template("statistics.html", user_info=user_info_list, link_map=link_map)
+        base_url = request.host_url
+        return render_template("statistics.html", user_info=user_info_list, link_map=link_map, base_url=base_url)
 
     # If not authenticated, show the login form
     return render_template("login.html")
@@ -305,7 +306,11 @@ def generate_link():
         logging.error("Incorrect link schema from {request.remote_addr} Data: {data}")
         return jsonify({"status": "error", "message": "Incorrect schema"}), 400
     try:
-        insert_link(db_path, validated_data["generatedLink"], validated_data["redirectUrl"], validated_data["gpsEnabled"])
+        if "/" not in validated_data["generatedLink"]:
+            validated_data["generatedLink"] = "/"
+
+        path = "/" + validated_data["generatedLink"].split("/")[-1]
+        insert_link(db_path, path, validated_data["redirectUrl"], validated_data["gpsEnabled"])
         logging.info(f"Successfully inserted new link {validated_data['generatedLink']} into the database.")
         return jsonify({"status": "success", "message": "Links successfully inserted into database"})
     except Exception as e:
@@ -318,7 +323,7 @@ def generate_link():
 @app.route("/<path:path>", methods=["GET", 'POST'])
 def user_info(path):
 
-    url = request.url
+    url = request.path
     link_data = get_link_by_url(db_path, url)
     # Log the clients information with in index page that loads the javascript
     if request.method == "GET":

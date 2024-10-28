@@ -101,7 +101,7 @@
                 <tbody>
                     {% for custom_link, redirect_link, gps_enabled in link_map %}
                     <tr>
-                        <td>{{ custom_link }}</td>
+                        <td>{{ base_url.rstrip('/') }}{{ custom_link }}</td>
                         <td>{{ redirect_link }}</td>
                         <td>{{ "Enabled" if gps_enabled == 1 else "Disabled" }}</td>
                         <td>
