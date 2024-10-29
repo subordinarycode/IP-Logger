@@ -132,7 +132,6 @@ python app.py -i 0.0.0.0 -p 8080 --debug
 - `--debug`: Enables Flask debug mode.
 - `--ssl_cert`: Path to SSL certificate file.
 - `--ssl_key`: Path to SSL key file.
-- `--gps`: Enables GPS functionality for obtaining client geolocation.
 - `--cloudflared`: Starts a Cloudflared tunnel for public internet access.
 - `-p, --port`: Specify the port number (default: 5000).
 - `-i, --interface`: Specify the interface to use (default: `127.0.0.1`).

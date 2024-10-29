@@ -118,6 +118,7 @@ th, td {
     width: 100%;
     margin: 5px 0;
     padding: 10px;
+    margin-left: 10px;
 }
 
 /* Mobile-specific adjustments */
